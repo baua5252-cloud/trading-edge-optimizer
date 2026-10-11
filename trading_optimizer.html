@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html class="dark">
+<head>
+  <meta charset="utf-8">
+  <title>Trading Edge Optimizer - Dark Edition</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #090a0f;
+      --card-dark: #11131a;
+      --card-border: #1f2330;
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+      --neon-green: #10b981;
+      --neon-blue: #3b82f6;
+      --neon-red: #ef4444;
+      --neon-amber: #f59e0b;
+    }
+    body {
+      background-color: var(--bg-dark) !important;
+      color: var(--text-main) !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .tab-active {
+      border-bottom: 2px solid var(--neon-green);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .tab-inactive {
+      color: #64748b;
+    }
+    .tab-inactive:hover {
+      color: #cbd5e1;
+    }
+    .dark-card {
+      background: var(--card-dark);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+    }
+    .stat-card {
+      transition: all 0.2s ease;
+      background: #0d0f16;
+      border: 1px solid #1a1e2b;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: #2e354b;
+    }
+    canvas {
+      width: 100% !important;
+      max-height: 320px;
+      background: transparent;
+    }
+    input[type="range"] {
+      accent-color: var(--neon-green);
+      background-color: #1a1e2b;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid #1a1e2b;
+      font-size: 0.825rem;
+    }
+    th {
+      font-weight: 600;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      background: #0d0f16;
+    }
+    tr:hover td {
+      background: #141722;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+  </style>
+</head>
+<body class="p-5">
+<div class="max-w-6xl mx-auto space-y-5">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-3 border-b border-[#1a1e2b] flex-wrap gap-3">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-[#10b981] shadow-[0_0_10px_#10b981]"></span>
+        <h1 class="text-2xl font-bold tracking-tight text-white">Trading Edge Optimizer</h1>
+      </div>
+      <p class="text-[#94a3b8] text-sm mt-1">Dark High-Contrast Mode • Statistical Model • Gold & Nasdaq 100 • Prop Firm</p>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+      <span class="badge badge-green">Win Rate: 60%</span>
+      <span class="badge badge-green">R:R: 1:1.5</span>
+      <span class="badge badge-green">EV: +0.50R / trade</span>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="stat-card rounded-xl p-4 shadow-sm border border-[#1a1e2b]">
+      <p class="text-[#64748b] text-xs font-medium uppercase tracking-wider">Expected Value / Trade</p>
+      <p class="text-2xl font-black mt-1 text-[#34d399]">+0.50R</p>
+      <p class="text-[#64748b] text-xs mt-1">Per unit risked</p>
+    </div>
+    <div class="stat-card rounded-xl p-4 shadow-sm border border-[#1a1e2b]">
+      <p class="text-[#64748b] text-xs font-medium uppercase tracking-wider">Kelly Criterion</p>
+      <p class="text-2xl font-black mt-1 text-[#60a5fa]" id="kellyDisplay">33.3%</p>
+      <p class="text-[#64748b] text-xs mt-1">Half-Kelly: <span id="halfKellyVal" class="text-white font-bold">16.7%</span></p>
+    </div>
+    <div class="stat-card rounded-xl p-4 shadow-sm border border-[#1a1e2b]">
+      <p class="text-[#64748b] text-xs font-medium uppercase tracking-wider">Profit Factor</p>
+      <p class="text-2xl font-black mt-1 text-[#34d399]">2.25</p>
+      <p class="text-[#64748b] text-xs mt-1">Gross Win / Gross Loss</p>
+    </div>
+    <div class="stat-card rounded-xl p-4 shadow-sm border border-[#1a1e2b]">
+      <p class="text-[#64748b] text-xs font-medium uppercase tracking-wider">Risk of Ruin</p>
+      <p class="text-2xl font-black mt-1 text-[#34d399]">&lt; 1%</p>
+      <p class="text-[#64748b] text-xs mt-1">At 1.5–2% risk per trade</p>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="flex gap-6 border-b border-[#1a1e2b] overflow-x-auto text-sm pb-1">
+    <button class="tab-active pb-2 cursor-pointer whitespace-nowrap" onclick="switchTab('monte-carlo')" id="tab-monte-carlo">Monte Carlo</button>
+    <button class="tab-inactive pb-2 cursor-pointer whitespace-nowrap" onclick="switchTab('position-sizing')" id="tab-position-sizing">Position Sizing</button>
+    <button class="tab-inactive pb-2 cursor-pointer whitespace-nowrap" onclick="switchTab('trade-plan')" id="tab-trade-plan">Trade Scaling Plan</button>
+    <button class="tab-inactive pb-2 cursor-pointer whitespace-nowrap" onclick="switchTab('prop-firm')" id="tab-prop-firm">Prop Firm Optimizer</button>
+    <button class="tab-inactive pb-2 cursor-pointer whitespace-nowrap" onclick="switchTab('probability')" id="tab-probability">Probability Tables</button>
+  </div>
+
+  <!-- ===== MONTE CARLO TAB ===== -->
+  <div id="panel-monte-carlo" class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="dark-card p-4 space-y-4">
+        <h3 class="font-semibold text-sm text-white">⚙️ Simulation Parameters</h3>
+        <div class="space-y-3">
+          <div>
+            <div class="flex justify-between text-xs text-[#94a3b8] mb-1">
+              <span>Win Rate</span><span class="text-[#34d399] font-bold" id="wrVal">60%</span>
+            </div>
+            <input type="range" min="40" max="80" value="60" id="winRate" class="w-full" oninput="updateSim()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs text-[#94a3b8] mb-1">
+              <span>Risk:Reward Ratio</span><span class="text-[#34d399] font-bold" id="rrVal">1.5</span>
+            </div>
+            <input type="range" min="10" max="40" value="15" id="riskReward" class="w-full" oninput="updateSim()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs text-[#94a3b8] mb-1">
+              <span>Risk Per Trade</span><span class="text-[#60a5fa] font-bold" id="riskVal">2.0%</span>
+            </div>
+            <input type="range" min="5" max="50" value="20" id="riskPct" class="w-full" oninput="updateSim()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs text-[#94a3b8] mb-1">
+              <span>Number of Trades</span><span class="text-white font-bold" id="numTradesVal">100</span>
+            </div>
+            <input type="range" min="20" max="500" value="100" id="numTrades" class="w-full" oninput="updateSim()">
+          </div>
+          <div>
+            <div class="flex justify-between text-xs text-[#94a3b8] mb-1">
+              <span>Simulations</span><span class="text-white font-bold" id="numSimsVal">500</span>
+            </div>
+            <input type="range" min="100" max="2000" value="500" step="100" id="numSims" class="w-full" oninput="updateSim()">
+          </div>
+          <button onclick="runMonteCarlo()" class="w-full bg-[#10b981] hover:bg-[#059669] text-black font-bold rounded-lg px-4 py-2.5 text-sm transition cursor-pointer mt-2 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+            Run Monte Carlo Simulation
+          </button>
+        </div>
+      </div>
+      <div class="md:col-span-2 dark-card p-4">
+        <h3 class="font-semibold text-sm text-white mb-2">Equity Curves (Monte Carlo Paths)</h3>
+        <canvas id="mcChart" height="300"></canvas>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="dark-card p-3 text-center">
+        <p class="text-[#64748b] text-xs">Median Final Balance</p>
+        <p class="text-xl font-bold text-[#34d399]" id="mcMedian">—</p>
+      </div>
+      <div class="dark-card p-3 text-center">
+        <p class="text-[#64748b] text-xs">Worst Case (5th %ile)</p>
+        <p class="text-xl font-bold text-[#f87171]" id="mcWorst">—</p>
+      </div>
+      <div class="dark-card p-3 text-center">
+        <p class="text-[#64748b] text-xs">Best Case (95th %ile)</p>
+        <p class="text-xl font-bold text-[#34d399]" id="mcBest">—</p>
+      </div>
+      <div class="dark-card p-3 text-center">
+        <p class="text-[#64748b] text-xs">Max Drawdown (Median)</p>
+        <p class="text-xl font-bold text-[#fbbf24]" id="mcDrawdown">—</p>
+      </div>
+    </div>
+    <div class="dark-card p-4">
+      <h3 class="font-semibold text-sm text-white mb-2">Drawdown Distribution Frequency</h3>
+      <canvas id="ddChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- ===== POSITION SIZING TAB ===== -->
+  <div id="panel-position-sizing" class="hidden space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="dark-card p-4 space-y-3">
+        <h3 class="font-semibold text-sm text-white">Kelly Criterion Analysis</h3>
+        <p class="text-[#94a3b8] text-xs">Mathematically optimal bet sizing to maximize logarithmic wealth growth.</p>
+        <div class="space-y-2">
+          <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[#1a1e2b]"><span class="text-sm text-[#94a3b8]">Full Kelly</span><span class="text-sm font-bold text-white" id="fullKelly2">33.3%</span></div>
+          <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[rgba(16,185,129,0.3)]"><span class="text-sm font-semibold text-[#34d399]">★ Half Kelly (Optimal Theoretical)</span><span class="text-sm font-bold text-[#34d399]" id="halfKelly2">16.7%</span></div>
+          <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[#1a1e2b]"><span class="text-sm text-[#94a3b8]">Quarter Kelly</span><span class="text-sm font-bold text-white" id="quarterKelly2">8.3%</span></div>
+          <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[#1a1e2b]"><span class="text-sm text-[#60a5fa] font-semibold">Prop Firm Recommended</span><span class="text-sm font-bold text-[#60a5fa]">1.0 – 1.5%</span></div>
+        </div>
+        <div class="p-3 rounded-lg bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.2)]">
+          <p class="text-xs font-bold text-[#34d399]">⚡ PROP FIRM RULE</p>
+          <p class="text-xs mt-1 text-[#94a3b8]">Keep risk at <strong>1.0%–1.5%</strong>. Your +0.50R edge will pass any challenge safely without triggering maximum drawdown.</p>
+        </div>
+      </div>
+      <div class="dark-card p-4 space-y-3">
+        <h3 class="font-semibold text-sm text-white">Position Size Calculator</h3>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Account Capital ($)</label>
+          <input type="number" value="100000" id="accountSize" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPosition()">
+        </div>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Risk Per Trade (%)</label>
+          <input type="number" value="1.5" step="0.1" id="riskPctCalc" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPosition()">
+        </div>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Stop Loss (Points / Pips)</label>
+          <input type="number" value="20" id="stopLoss" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPosition()">
+        </div>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Point Value ($ per point per lot)</label>
+          <input type="number" value="10" id="pointValue" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPosition()">
+        </div>
+        <div class="p-3 rounded-lg bg-[#0d0f16] border border-[#1a1e2b] space-y-1">
+          <div class="flex justify-between text-sm"><span class="text-[#94a3b8]">Dollar Risk</span><span class="font-bold text-white" id="dollarRisk">$1,500</span></div>
+          <div class="flex justify-between text-sm"><span class="text-[#94a3b8]">Position Sizing</span><span class="font-bold text-[#60a5fa]" id="posSize">7.50 lots</span></div>
+          <div class="flex justify-between text-sm"><span class="text-[#94a3b8]">Take Profit Target (1.5R)</span><span class="font-bold text-[#34d399]" id="tpTarget">$2,250</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="dark-card p-4">
+      <h3 class="font-semibold text-sm text-white mb-2">Growth Rate vs. Risk Per Trade</h3>
+      <canvas id="growthChart" height="250"></canvas>
+    </div>
+  </div>
+
+  <!-- ===== TRADE SCALING PLAN TAB ===== -->
+  <div id="panel-trade-plan" class="hidden space-y-4">
+    <div class="dark-card p-4 space-y-2">
+      <h3 class="font-semibold text-sm text-white">📈 Optimal Sample Size Convergence</h3>
+      <p class="text-[#94a3b8] text-xs mb-3">With your EV = +0.50R, see how probability of profit approaches 100% as trade volume expands.</p>
+      <table>
+        <thead>
+          <tr><th>Trades / Month</th><th>Expected R</th><th>Std Dev (R)</th><th>95% Conf. Range</th><th>P(Profitable)</th><th>Confidence Status</th></tr>
+        </thead>
+        <tbody id="sampleSizeTable"></tbody>
+      </table>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="dark-card p-4 space-y-2">
+        <h3 class="font-semibold text-sm text-white">Gold (XAUUSD) Instrument Plan</h3>
+        <div class="space-y-1.5 text-xs text-[#94a3b8]">
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Primary Trading Session</span><span class="text-white font-bold">London + NY Overlap</span></div>
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Target Volume</span><span class="text-white font-bold">8–12 Trades / Week</span></div>
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Risk Per Trade</span><span class="text-[#60a5fa] font-bold">1.0% – 1.5%</span></div>
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Expected Weekly Return</span><span class="text-[#34d399] font-bold">+4.0R to +6.0R</span></div>
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Max Daily Drawdown Stop</span><span class="text-[#f87171] font-bold">-2.0R (Close for Day)</span></div>
+        </div>
+      </div>
+      <div class="dark-card p-4 space-y-2">
+        <h3 class="font-semibold text-sm text-white">Nasdaq 100 (NAS100) Plan</h3>
+        <div class="space-y-1.5 text-xs text-[#94a3b8]">
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Primary Trading Session</span><span class="text-white font-bold">NY Open Drive + Power Hour</span></div>
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Target Volume</span><span class="text-white font-bold">6–10 Trades / Week</span></div>
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Risk Per Trade</span><span class="text-[#60a5fa] font-bold">1.0% – 1.5%</span></div>
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Expected Weekly Return</span><span class="text-[#34d399] font-bold">+3.0R to +5.0R</span></div>
+          <div class="flex justify-between p-2 rounded bg-[#0d0f16]"><span>Max Daily Drawdown Stop</span><span class="text-[#f87171] font-bold">-2.0R (Close for Day)</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="dark-card p-4">
+      <h3 class="font-semibold text-sm text-white mb-2">Probability of Being Profitable vs Sample Size</h3>
+      <canvas id="convergenceChart" height="250"></canvas>
+    </div>
+  </div>
+
+  <!-- ===== PROP FIRM TAB ===== -->
+  <div id="panel-prop-firm" class="hidden space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="dark-card p-4 space-y-3">
+        <h3 class="font-semibold text-sm text-white">Prop Firm Challenge Simulator</h3>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Account Capital ($)</label>
+          <input type="number" value="100000" id="pfAccount" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPropFirm()">
+        </div>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Profit Target (%)</label>
+          <input type="number" value="8" step="0.5" id="pfTarget" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPropFirm()">
+        </div>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Max Drawdown (%)</label>
+          <input type="number" value="10" step="0.5" id="pfDrawdown" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPropFirm()">
+        </div>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Daily Max Drawdown (%)</label>
+          <input type="number" value="5" step="0.5" id="pfDailyDD" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPropFirm()">
+        </div>
+        <div>
+          <label class="text-xs text-[#94a3b8]">Risk Per Trade (%)</label>
+          <input type="number" value="1.5" step="0.25" id="pfRisk" class="w-full mt-1 p-2 rounded-lg bg-[#0d0f16] border border-[#1f2330] text-white text-sm" oninput="calcPropFirm()">
+        </div>
+        <button onclick="runPropFirmSim()" class="w-full bg-[#10b981] hover:bg-[#059669] text-black font-bold rounded-lg px-4 py-2.5 text-sm transition cursor-pointer mt-2 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+          Simulate 10,000 Challenges
+        </button>
+      </div>
+      <div class="dark-card p-4 flex flex-col justify-between">
+        <div>
+          <h3 class="font-semibold text-sm text-white mb-3">Simulation Results</h3>
+          <div class="space-y-2">
+            <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[#1a1e2b]"><span class="text-sm text-[#94a3b8]">Pass Rate</span><span class="text-sm font-bold text-[#34d399]" id="pfPassRate">—</span></div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[#1a1e2b]"><span class="text-sm text-[#94a3b8]">Avg Trades to Pass</span><span class="text-sm font-bold text-white" id="pfAvgTrades">—</span></div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[#1a1e2b]"><span class="text-sm text-[#94a3b8]">Median Max Drawdown</span><span class="text-sm font-bold text-[#fbbf24]" id="pfMedianDD">—</span></div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[#1a1e2b]"><span class="text-sm text-[#94a3b8]">Drawdown Breach Rate</span><span class="text-sm font-bold text-[#f87171]" id="pfFailDD">—</span></div>
+            <div class="flex justify-between p-2.5 rounded-lg bg-[#0d0f16] border border-[#1a1e2b]"><span class="text-sm text-[#94a3b8]">Expected Profit If Passed</span><span class="text-sm font-bold text-[#34d399]" id="pfExpProfit">—</span></div>
+          </div>
+        </div>
+        <div class="mt-3 p-3 rounded-lg bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.2)]">
+          <p class="text-xs font-bold text-[#34d399]">⚡ STATISTICAL CERTAINTY</p>
+          <p class="text-xs mt-1 text-[#94a3b8]">With a 60% win rate and 1:1.5 R:R, passing an 8% challenge is high probability as long as individual trade risk is kept under 1.5%.</p>
+        </div>
+      </div>
+    </div>
+    <div class="dark-card p-4">
+      <h3 class="font-semibold text-sm text-white mb-2">Optimal Risk % for Maximum Pass Rate</h3>
+      <canvas id="pfChart" height="250"></canvas>
+    </div>
+  </div>
+
+  <!-- ===== PROBABILITY TABLES TAB ===== -->
+  <div id="panel-probability" class="hidden space-y-4">
+    <div class="dark-card p-4">
+      <h3 class="font-semibold text-sm text-white mb-2">Consecutive Loss Probability (Losing Streaks)</h3>
+      <p class="text-[#94a3b8] text-xs mb-3">Understanding streaks prevents revenge trading when variance strikes:</p>
+      <table>
+        <thead><tr><th>Consecutive Losses</th><th>Probability</th><th>Expected Frequency</th><th>Impact at 1.5% Risk</th></tr></thead>
+        <tbody id="lossStreakTable"></tbody>
+      </table>
+    </div>
+    <div class="dark-card p-4">
+      <h3 class="font-semibold text-sm text-white mb-2">Winning Streak Probability & Recovery Speed</h3>
+      <table>
+        <thead><tr><th>Consecutive Wins</th><th>Probability</th><th>Profit Generated (1.5R)</th><th>Losses Recovered</th></tr></thead>
+        <tbody id="winStreakTable"></tbody>
+      </table>
+    </div>
+    <div class="dark-card p-4">
+      <h3 class="font-semibold text-sm text-white mb-2">Expectancy Matrix (Win Rate vs R:R)</h3>
+      <div class="overflow-x-auto">
+        <table>
+          <thead><tr><th>WR \ R:R</th><th>1.0</th><th>1.25</th><th>1.5</th><th>1.75</th><th>2.0</th><th>2.5</th><th>3.0</th></tr></thead>
+          <tbody id="expectancyMatrix"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dark-card p-4">
+      <h3 class="font-semibold text-sm text-white mb-2">12-Month Compounded Growth Curves</h3>
+      <canvas id="compoundChart" height="250"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===================== CORE MATH =====================
+function calcEV(wr, rr) { return wr * rr - (1 - wr); }
+function calcKelly(wr, rr) { return wr - (1 - wr) / rr; }
+function normCDF(x) {
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.sqrt(2);
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t * Math.exp(-x*x);
+  return 0.5 * (1.0 + sign * y);
+}
+function getColors() {
+  return { grid: 'rgba(255,255,255,0.06)', text: '#94a3b8', green: '#10b981', red: '#ef4444', amber: '#f59e0b', blue: '#3b82f6' };
+}
+function drawLine(ctx, points, color, width=1.5) {
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  points.forEach((p,i) => i===0 ? ctx.moveTo(p[0],p[1]) : ctx.lineTo(p[0],p[1]));
+  ctx.stroke();
+}
+function setupCanvas(id, h) {
+  const c = document.getElementById(id);
+  const d = window.devicePixelRatio || 1;
+  const r = c.getBoundingClientRect();
+  c.width = r.width * d;
+  c.height = h * d;
+  const ctx = c.getContext('2d');
+  ctx.scale(d, d);
+  ctx.clearRect(0,0,r.width,h);
+  return { ctx, w: r.width, h };
+}
+function toCanvasCoords(val, idx, total, yMin, yMax, margin, plotW, plotH) {
+  const x = margin.left + (idx / (total-1)) * plotW;
+  const y = margin.top + plotH - ((val - yMin) / (yMax - yMin)) * plotH;
+  return [x, Math.max(margin.top, Math.min(margin.top + plotH, y))];
+}
+function drawAxes(ctx, w, h, margin, xLabel, yLabel, yMin, yMax, xMax, colors, yFormat='') {
+  const plotW = w - margin.left - margin.right;
+  const plotH = h - margin.top - margin.bottom;
+  ctx.strokeStyle = colors.grid;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = margin.top + (plotH * i / 5);
+    ctx.beginPath(); ctx.moveTo(margin.left, y); ctx.lineTo(w - margin.right, y); ctx.stroke();
+    const val = yMax - (yMax - yMin) * i / 5;
+    ctx.fillStyle = colors.text;
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'right';
+    const label = yFormat === '%' ? (val*100).toFixed(0)+'%' : yFormat === '$' ? '$'+(val>=1000?(val/1000).toFixed(0)+'K':val.toFixed(0)) : val.toFixed(1);
+    ctx.fillText(label, margin.left - 8, y + 4);
+  }
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 5; i++) {
+    const x = margin.left + (plotW * i / 5);
+    ctx.fillText(Math.round(xMax * i / 5), x, h - margin.bottom + 18);
+  }
+  ctx.fillText(xLabel, margin.left + plotW/2, h - 4);
+  ctx.save();
+  ctx.translate(12, margin.top + plotH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+  return { plotW, plotH };
+}
+
+// ===================== TAB SWITCHING =====================
+const tabs = ['monte-carlo','position-sizing','trade-plan','prop-firm','probability'];
+function switchTab(name) {
+  tabs.forEach(t => {
+    document.getElementById('panel-' + t).classList.toggle('hidden', t !== name);
+    document.getElementById('tab-' + t).className = t === name ? 'tab-active pb-2 cursor-pointer whitespace-nowrap' : 'tab-inactive pb-2 cursor-pointer whitespace-nowrap';
+  });
+  if (name === 'monte-carlo') runMonteCarlo();
+  if (name === 'position-sizing') drawGrowthChart();
+  if (name === 'trade-plan') { buildSampleSizeTable(); drawConvergenceChart(); }
+  if (name === 'probability') { buildStreakTables(); buildExpectancyMatrix(); drawCompoundChart(); }
+}
+
+function updateSim() {
+  document.getElementById('wrVal').textContent = document.getElementById('winRate').value + '%';
+  document.getElementById('rrVal').textContent = (document.getElementById('riskReward').value / 10).toFixed(1);
+  document.getElementById('riskVal').textContent = (document.getElementById('riskPct').value / 10).toFixed(1) + '%';
+  document.getElementById('numTradesVal').textContent = document.getElementById('numTrades').value;
+  document.getElementById('numSimsVal').textContent = document.getElementById('numSims').value;
+}
+
+// ===================== MONTE CARLO =====================
+function runMonteCarlo() {
+  const wr = parseInt(document.getElementById('winRate').value) / 100;
+  const rr = parseInt(document.getElementById('riskReward').value) / 10;
+  const risk = parseInt(document.getElementById('riskPct').value) / 1000;
+  const N = parseInt(document.getElementById('numTrades').value);
+  const sims = parseInt(document.getElementById('numSims').value);
+
+  const allCurves = [];
+  const finalBalances = [];
+  const maxDrawdowns = [];
+
+  for (let s = 0; s < sims; s++) {
+    const curve = [1.0];
+    let peak = 1.0;
+    let maxDD = 0;
+    let balance = 1.0;
+
+    for (let t = 0; t < N; t++) {
+      const win = Math.random() < wr;
+      const pnl = win ? balance * risk * rr : -balance * risk;
+      balance += pnl;
+      if (balance <= 0) { balance = 0; curve.push(0); break; }
+      curve.push(balance);
+      if (balance > peak) peak = balance;
+      const dd = (peak - balance) / peak;
+      if (dd > maxDD) maxDD = dd;
+    }
+    allCurves.push(curve);
+    finalBalances.push(balance);
+    maxDrawdowns.push(maxDD);
+  }
+
+  finalBalances.sort((a,b) => a-b);
+  maxDrawdowns.sort((a,b) => a-b);
+
+  const p5 = finalBalances[Math.floor(sims * 0.05)];
+  const p50 = finalBalances[Math.floor(sims * 0.5)];
+  const p95 = finalBalances[Math.floor(sims * 0.95)];
+  const medianDD = maxDrawdowns[Math.floor(sims * 0.5)];
+
+  document.getElementById('mcMedian').textContent = '+' + ((p50 - 1) * 100).toFixed(0) + '%';
+  document.getElementById('mcWorst').textContent = ((p5 - 1) * 100).toFixed(0) + '%';
+  document.getElementById('mcBest').textContent = '+' + ((p95 - 1) * 100).toFixed(0) + '%';
+  document.getElementById('mcDrawdown').textContent = (medianDD * 100).toFixed(1) + '%';
+
+  // Render Curves
+  const { ctx, w, h } = setupCanvas('mcChart', 300);
+  const colors = getColors();
+  const margin = {top:20, right:20, bottom:35, left:65};
+
+  let yMin = Infinity, yMax = -Infinity;
+  const step = Math.max(1, Math.floor(sims / 50));
+  for (let s = 0; s < sims; s += step) {
+    for (const v of allCurves[s]) {
+      if (v < yMin) yMin = v;
+      if (v > yMax) yMax = v;
+    }
+  }
+  yMin = Math.max(0, yMin * 0.95);
+  yMax = yMax * 1.05;
+
+  const { plotW, plotH } = drawAxes(ctx, w, h, margin, 'Trade #', 'Balance Growth', yMin, yMax, N, colors, '$');
+
+  for (let s = 0; s < sims; s += step) {
+    const curve = allCurves[s];
+    const pts = curve.map((v, i) => toCanvasCoords(v, i, N+1, yMin, yMax, margin, plotW, plotH));
+    const final = curve[curve.length-1];
+    drawLine(ctx, pts, final >= 1 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.15)', 1);
+  }
+
+  const medianCurve = [];
+  for (let t = 0; t <= N; t++) {
+    const vals = allCurves.map(c => c[Math.min(t, c.length-1)]).sort((a,b) => a-b);
+    medianCurve.push(vals[Math.floor(sims/2)]);
+  }
+  drawLine(ctx, medianCurve.map((v,i) => toCanvasCoords(v, i, N+1, yMin, yMax, margin, plotW, plotH)), colors.green, 2.5);
+
+  // Render Drawdown
+  drawDDChart(maxDrawdowns, sims);
+}
+
+function drawDDChart(drawdowns, sims) {
+  const { ctx, w, h } = setupCanvas('ddChart', 200);
+  const colors = getColors();
+  const margin = {top:20, right:20, bottom:35, left:55};
+  const plotW = w - margin.left - margin.right;
+  const plotH = h - margin.top - margin.bottom;
+
+  const bins = 25;
+  const maxDD = Math.max(...drawdowns);
+  const binWidth = maxDD / bins;
+  const counts = new Array(bins).fill(0);
+  for (const dd of drawdowns) {
+    const idx = Math.min(bins-1, Math.floor(dd / binWidth));
+    counts[idx]++;
+  }
+  const maxCount = Math.max(...counts);
+
+  const barW = plotW / bins - 2;
+  for (let i = 0; i < bins; i++) {
+    const x = margin.left + (i * plotW / bins) + 1;
+    const barH = (counts[i] / maxCount) * plotH;
+    const y = margin.top + plotH - barH;
+    const pct = (i + 0.5) * binWidth;
+    ctx.fillStyle = pct < 0.08 ? 'rgba(16,185,129,0.7)' : pct < 0.15 ? 'rgba(245,158,11,0.7)' : 'rgba(239,68,68,0.7)';
+    ctx.fillRect(x, y, barW, barH);
+  }
+
+  ctx.fillStyle = colors.text;
+  ctx.font = '11px system-ui';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 5; i++) {
+    const x = margin.left + (i * plotW / 5);
+    ctx.fillText((maxDD * i / 5 * 100).toFixed(0) + '%', x, h - margin.bottom + 18);
+  }
+  ctx.fillText('Max Drawdown Occurred (%)', margin.left + plotW/2, h - 2);
+}
+
+// ===================== POSITION SIZING =====================
+function calcPosition() {
+  const account = parseFloat(document.getElementById('accountSize').value) || 0;
+  const riskPct = parseFloat(document.getElementById('riskPctCalc').value) || 0;
+  const sl = parseFloat(document.getElementById('stopLoss').value) || 1;
+  const pv = parseFloat(document.getElementById('pointValue').value) || 1;
+
+  const dollarRisk = account * riskPct / 100;
+  const lots = dollarRisk / (sl * pv);
+  const tp = dollarRisk * 1.5;
+
+  document.getElementById('dollarRisk').textContent = '$' + dollarRisk.toLocaleString();
+  document.getElementById('posSize').textContent = lots.toFixed(2) + ' lots';
+  document.getElementById('tpTarget').textContent = '$' + tp.toLocaleString();
+}
+
+function drawGrowthChart() {
+  const { ctx, w, h } = setupCanvas('growthChart', 250);
+  const colors = getColors();
+  const margin = {top:30, right:20, bottom:35, left:65};
+  const plotW = w - margin.left - margin.right;
+  const plotH = h - margin.top - margin.bottom;
+
+  const wr = 0.6, rr = 1.5, N = 100;
+  const risks = [0.005, 0.01, 0.015, 0.02, 0.03];
+  const lineColors = ['#64748b', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+  const allCurves = risks.map(risk => {
+    const curve = [1.0];
+    let bal = 1.0;
+    for (let t = 0; t < N; t++) {
+      bal *= (1 + (wr * risk * rr - (1-wr) * risk));
+      curve.push(bal);
+    }
+    return curve;
+  });
+
+  const yMax = Math.max(...allCurves.map(c => c[c.length-1])) * 1.05;
+  drawAxes(ctx, w, h, margin, 'Trade #', 'Theoretical Growth', 0.9, yMax, N, colors, '$');
+
+  allCurves.forEach((curve, idx) => {
+    const pts = curve.map((v, i) => toCanvasCoords(v, i, N+1, 0.9, yMax, margin, plotW, plotH));
+    drawLine(ctx, pts, lineColors[idx], idx === 2 ? 3 : 1.5);
+  });
+}
+
+// ===================== SAMPLE SIZE TABLE =====================
+function buildSampleSizeTable() {
+  const tbody = document.getElementById('sampleSizeTable');
+  const wr = 0.6, rr = 1.5;
+  const ev = calcEV(wr, rr);
+  const tradeVar = wr * Math.pow(rr, 2) + (1 - wr) * 1 - Math.pow(ev, 2);
+  const tradeSD = Math.sqrt(tradeVar);
+
+  const trades = [10, 20, 30, 40, 50, 60, 80, 100, 150];
+  let html = '';
+  trades.forEach(n => {
+    const totalEV = ev * n;
+    const totalSD = tradeSD * Math.sqrt(n);
+    const low = totalEV - 1.96 * totalSD;
+    const high = totalEV + 1.96 * totalSD;
+    const probProfit = normCDF(totalEV / totalSD);
+
+    let verdict = '', vColor = '';
+    if (n < 20) { verdict = '⚠️ High Variance'; vColor = '#ef4444'; }
+    else if (n < 40) { verdict = '🟡 Adequate'; vColor = '#f59e0b'; }
+    else { verdict = '🟢 Statistical Edge'; vColor = '#10b981'; }
+
+    html += `<tr>
+      <td class="font-bold text-white">${n}</td>
+      <td class="text-[#34d399]">+${totalEV.toFixed(1)}R</td>
+      <td>${totalSD.toFixed(1)}R</td>
+      <td>${low.toFixed(1)}R to +${high.toFixed(1)}R</td>
+      <td class="font-bold text-[#34d399]">${(probProfit*100).toFixed(1)}%</td>
+      <td style="color: ${vColor}; font-weight: 600;">${verdict}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+function drawConvergenceChart() {
+  const { ctx, w, h } = setupCanvas('convergenceChart', 250);
+  const colors = getColors();
+  const margin = {top:20, right:20, bottom:35, left:55};
+  const plotW = w - margin.left - margin.right;
+  const plotH = h - margin.top - margin.bottom;
+
+  const wr = 0.6, rr = 1.5;
+  const ev = calcEV(wr, rr);
+  const tradeVar = wr * Math.pow(rr, 2) + (1 - wr) * 1 - Math.pow(ev, 2);
+  const tradeSD = Math.sqrt(tradeVar);
+
+  const data = [];
+  for (let n = 5; n <= 150; n++) {
+    const prob = normCDF((ev * n) / (tradeSD * Math.sqrt(n)));
+    data.push({n, prob});
+  }
+
+  drawAxes(ctx, w, h, margin, 'Number of Trades', 'P(Profit)', 0.5, 1.0, 150, colors, '%');
+  const pts = data.map(d => toCanvasCoords(d.prob, d.n - 5, 146, 0.5, 1.0, margin, plotW, plotH));
+  drawLine(ctx, pts, colors.green, 2.5);
+}
+
+// ===================== STREAK TABLES =====================
+function buildStreakTables() {
+  const wr = 0.6, rr = 1.5, risk = 1.5;
+  let html = '';
+  for (let n = 2; n <= 8; n++) {
+    const prob = Math.pow(1 - wr, n);
+    const freq = n <= 3 ? 'Every week' : n <= 5 ? 'Monthly' : 'Quarterly';
+    html += `<tr>
+      <td class="font-bold text-white">${n} Losses in a Row</td>
+      <td>${(prob * 100).toFixed(2)}%</td>
+      <td>${freq}</td>
+      <td class="text-[#f87171] font-bold">-${(risk * n).toFixed(1)}%</td>
+    </tr>`;
+  }
+  document.getElementById('lossStreakTable').innerHTML = html;
+
+  html = '';
+  for (let n = 2; n <= 7; n++) {
+    const prob = Math.pow(wr, n);
+    html += `<tr>
+      <td class="font-bold text-[#34d399]">${n} Wins in a Row</td>
+      <td>${(prob * 100).toFixed(2)}%</td>
+      <td class="text-[#34d399] font-bold">+${(risk * rr * n).toFixed(1)}%</td>
+      <td>Recovers ${Math.ceil(n * rr)} losses</td>
+    </tr>`;
+  }
+  document.getElementById('winStreakTable').innerHTML = html;
+}
+
+function buildExpectancyMatrix() {
+  const rrs = [1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0];
+  const wrs = [0.45, 0.50, 0.55, 0.60, 0.65, 0.70];
+  let html = '';
+  wrs.forEach(w => {
+    html += `<tr><td class="font-bold text-white">${(w*100).toFixed(0)}%</td>`;
+    rrs.forEach(r => {
+      const ev = calcEV(w, r);
+      const isYou = w === 0.60 && r === 1.5;
+      const color = ev > 0 ? '#34d399' : '#f87171';
+      const bg = isYou ? 'background: rgba(16,185,129,0.15); font-weight:bold; border: 1px solid #10b981;' : '';
+      html += `<td style="color: ${color}; ${bg}">${ev > 0 ? '+' : ''}${ev.toFixed(2)}R ${isYou ? '⭐' : ''}</td>`;
+    });
+    html += `</tr>`;
+  });
+  document.getElementById('expectancyMatrix').innerHTML = html;
+}
+
+function drawCompoundChart() {
+  const { ctx, w, h } = setupCanvas('compoundChart', 250);
+  const colors = getColors();
+  const margin = {top:30, right:20, bottom:35, left:75};
+  const months = 12;
+  const scenarios = [
+    {name: '20 trades/mo', trades: 20, color: '#64748b'},
+    {name: '40 trades/mo', trades: 40, color: '#3b82f6'},
+    {name: '60 trades/mo', trades: 60, color: '#10b981'}
+  ];
+  const risk = 0.015, ev = 0.5;
+  const allCurves = scenarios.map(s => {
+    const curve = [100000];
+    let bal = 100000;
+    for (let m = 0; m < months; m++) {
+      bal *= (1 + (ev * s.trades * risk));
+      curve.push(bal);
+    }
+    return curve;
+  });
+  const yMax = Math.max(...allCurves.map(c => c[c.length-1])) * 1.05;
+  drawAxes(ctx, w, h, margin, 'Month', 'Capital', 90000, yMax, months, colors, '$');
+  allCurves.forEach((curve, idx) => {
+    const pts = curve.map((v, i) => toCanvasCoords(v, i, months+1, 90000, yMax, margin, w - margin.left - margin.right, h - margin.top - margin.bottom));
+    drawLine(ctx, pts, scenarios[idx].color, idx === 2 ? 3 : 1.5);
+  });
+}
+
+// ===================== PROP FIRM =====================
+function runPropFirmSim() {
+  const account = parseFloat(document.getElementById('pfAccount').value);
+  const target = parseFloat(document.getElementById('pfTarget').value) / 100;
+  const maxDD = parseFloat(document.getElementById('pfDrawdown').value) / 100;
+  const dailyDD = parseFloat(document.getElementById('pfDailyDD').value) / 100;
+  const risk = parseFloat(document.getElementById('pfRisk').value) / 100;
+  const wr = 0.6, rr = 1.5, sims = 10000;
+
+  let passed = 0, failedDD = 0;
+  const passedTrades = [];
+  const allMaxDD = [];
+
+  for (let s = 0; s < sims; s++) {
+    let bal = account, peak = account, dayStart = account;
+    let dayTrades = 0, done = false;
+
+    for (let t = 0; t < 150 && !done; t++) {
+      if (dayTrades >= 3) { dayStart = bal; dayTrades = 0; }
+      bal += Math.random() < wr ? bal * risk * rr : -bal * risk;
+      dayTrades++;
+
+      if ((dayStart - bal) / account > dailyDD || (peak - bal) / account > maxDD) {
+        failedDD++; done = true; break;
+      }
+      if (bal > peak) peak = bal;
+      if ((bal - account) / account >= target) {
+        passed++; passedTrades.push(t + 1); done = true; break;
+      }
+    }
+    allMaxDD.push((peak - Math.min(bal, peak)) / account);
+  }
+
+  allMaxDD.sort((a,b) => a-b);
+  document.getElementById('pfPassRate').textContent = ((passed/sims)*100).toFixed(1) + '%';
+  document.getElementById('pfAvgTrades').textContent = passedTrades.length ? Math.round(passedTrades.reduce((a,b)=>a+b,0)/passedTrades.length) : '—';
+  document.getElementById('pfMedianDD').textContent = (allMaxDD[Math.floor(sims*0.5)] * 100).toFixed(1) + '%';
+  document.getElementById('pfFailDD').textContent = ((failedDD/sims)*100).toFixed(1) + '%';
+  document.getElementById('pfExpProfit').textContent = '+$' + (account * target).toLocaleString();
+
+  drawPropFirmChart();
+}
+
+function drawPropFirmChart() {
+  const { ctx, w, h } = setupCanvas('pfChart', 250);
+  const colors = getColors();
+  const margin = {top:20, right:20, bottom:35, left:55};
+  const account = parseFloat(document.getElementById('pfAccount').value);
+  const target = parseFloat(document.getElementById('pfTarget').value) / 100;
+  const maxDD = parseFloat(document.getElementById('pfDrawdown').value) / 100;
+  const wr = 0.6;
+
+  const passRates = [];
+  for (let r = 5; r <= 35; r += 2) {
+    const risk = r / 1000;
+    let pass = 0;
+    for (let s = 0; s < 1000; s++) {
+      let b = account, p = account;
+      for (let t = 0; t < 100; t++) {
+        b += Math.random() < wr ? b * risk * 1.5 : -b * risk;
+        if (b > p) p = b;
+        if ((p - b) / account > maxDD) break;
+        if ((b - account) / account >= target) { pass++; break; }
+      }
+    }
+    passRates.push(pass / 1000);
+  }
+
+  drawAxes(ctx, w, h, margin, 'Risk Per Trade (%)', 'Pass Probability', 0, 1, 3.5, colors, '%');
+  const pts = passRates.map((v, i) => toCanvasCoords(v, i, passRates.length, 0, 1, margin, w - margin.left - margin.right, h - margin.top - margin.bottom));
+  drawLine(ctx, pts, colors.green, 2.5);
+}
+
+function calcPropFirm() {}
+
+// Initial load
+calcPosition();
+runMonteCarlo();
+</script>
+</body>
+</html>
